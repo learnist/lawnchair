@@ -3,11 +3,11 @@ module Lawnchair
     class Abstract
       class << self
         attr_reader :data_store
-        
+
         def data_store
           @data_store ||= {}
         end
-      
+
         def fetch(key, options={}, &block)
           start_time = Time.now
           if value = get(key, options)
@@ -20,28 +20,23 @@ module Lawnchair
             return value
           end
         end
-      
+
         def get(key, options={})
+          raise "Missing key" if key.nil? || key.empty?
           if options[:raw]
-            data_store[computed_key(key)]
+            data_store[key]
           else
-            value = data_store[computed_key(key)]
+            value = data_store[key]
             value.nil? ? nil : Marshal.load(value)
           end
         end
-      
-        def computed_key(key)
-          raise "Missing key" if key.nil? || key.empty?
-          prefix = "Lawnchair"
-          "#{prefix}:#{key}"
-        end
-        
+
         def db_connection?
           true
         end
-        
+
         def log(message, key, elapsed)
-          Lawnchair.redis.hincrby(message, computed_key(key), 1)
+          Lawnchair.redis.hincrby(message, key, 1)
           ActionController::Base.logger.info("Lawnchair Cache: #{message} (%0.6f secs): #{key}" % elapsed) if defined? ::ActionController::Base
         end
       end

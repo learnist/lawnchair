@@ -51,47 +51,47 @@ describe "Lawnchair::Cache" do
     it "returns the value if it exists" do
       expected_object = [1,2,3,4]
       Lawnchair.cache("marshalled_array") { expected_object }
-      
+
       x = Lawnchair.cache("marshalled_array") { "JUNK DATA" }
       x.should == expected_object
     end
-    
+
     it "marshalls the object into redis" do
       expected_object = [1,2,3,4]
       Lawnchair.cache("marshalled_array") { expected_object }
-      
-      Marshal.load(Lawnchair.redis["Lawnchair:marshalled_array"]).should == [1,2,3,4]
+
+      Marshal.load(Lawnchair.redis["marshalled_array"]).should == [1,2,3,4]
     end
-    
+
     context "when in_process => true" do
       it "fetches the value to/from the composite store" do
         mock_composite_engine = Lawnchair::StorageEngine::Composite.new
         Lawnchair::StorageEngine::Composite.stub!(:new).and_return(mock_composite_engine)
-        
+
         mock_composite_engine.should_receive(:fetch)
         Lawnchair.cache("mu", :in_process => true, :raw => true) { "fasa" }
       end
     end
-    
+
     context "when there is content to be interpolated" do
       context "when the key exists in the cache" do
-        before do 
+        before do
           Lawnchair.cache("mu") { "current time: __TIME__" }
-          Lawnchair.redis.exists("Lawnchair:mu").should be_true
+          Lawnchair.redis.exists("mu").should be_true
         end
-        
+
         it "replaces the key with the given data" do
           now = Time.now.to_s(:db)
           cached_result = Lawnchair.cache("mu", :interpolate => {"__TIME__" => now}) { "current time: __TIME__" }
           cached_result.should == "current time: #{now}"
         end
       end
-      
+
       context "when the key does NOT exist in the cache" do
-        before do 
+        before do
           Lawnchair.redis.exists("mu").should be_false
         end
-        
+
         it "replaces the key with the given data" do
           now = Time.now.to_s(:db)
           cached_result = Lawnchair.cache("mu", :interpolate => {"__TIME__" => now}) { "current time: __TIME__" }
@@ -99,7 +99,7 @@ describe "Lawnchair::Cache" do
         end
       end
     end
-    
+
     describe "caching a method" do
       it "should cache the value of a method" do
         grass = Grass.new
@@ -131,7 +131,7 @@ describe "Lawnchair::Cache" do
           grass.length.should == 4
         end
       end
-      
+
       # describe "when the parameter is an ActiveRecord object" do
       #         before do
       #           @treatment1 = Fertilize.new(3, 'a')
@@ -140,26 +140,26 @@ describe "Lawnchair::Cache" do
       #           @treatment1_again = Fertilize.new(187, 'a')
       #           @grass = Grass.new
       #         end
-      #         
+      #
       #         it "uses the primary key in the id" do
       #           @grass.weed(@treatment1).should == 7
       #           @grass.weed(@treatment2).should == 4
-      #           @grass.weed(@treatment3).should == 2     
-      #                
+      #           @grass.weed(@treatment3).should == 2
+      #
       #           @grass.weed(@treatment1).should == 7
-      #           @grass.weed(@treatment2).should == 4          
-      #           @grass.weed(@treatment3).should == 2          
-      # 
+      #           @grass.weed(@treatment2).should == 4
+      #           @grass.weed(@treatment3).should == 2
+      #
       #           @grass.weed(@treatment1_again).should == 7
       #         end
       #       end
-      
+
       # describe "when there are multiple parameters" do
       #   before do
       #     @treatment1 = Fertilize.new(3, 'a')
       #     @grass = Grass.new
       #   end
-      #   
+      #
       #   it "takes all parameters into consideration" do
       #     @grass.weed(@treatment1, [1,2,3]).should == 7
       #     @grass.weed(@treatment1, [1,2]).should == 4
@@ -167,13 +167,13 @@ describe "Lawnchair::Cache" do
       #     @grass.weed(@treatment1, [1,2]).should == 4
       #   end
       # end
-      
+
       describe "when options are passed" do
         before do
           @treatment1 = Fertilize.new(3, 'a')
           @grass = Grass.new
         end
-        
+
         it "allows the same options as regular calls to Lawnchair.cache" do
           @grass.weed(@treatment1, [1,2]).should == 7
           sleep 1
